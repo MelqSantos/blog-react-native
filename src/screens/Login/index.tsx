@@ -15,6 +15,7 @@ import {
 import Header from '../../shared/header';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Definição dos tipos para o formulário
 interface FormState {
@@ -34,6 +35,9 @@ const initialForm: FormState = {
   birth: '',
   email: ''
 };
+
+// Configuração da URL da API
+const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://192.168.15.6:8080';
 
 export default function Login() {
   const [form, setForm] = useState<FormState>(initialForm);
@@ -63,30 +67,42 @@ export default function Login() {
     }
 
     try {
-      // Simulação da chamada de API baseada na lógica do snippet web
-      // Aqui você substituiria pelo seu fetch real para o backend
-      
+      const endpoint = isRegister ? '/user' : '/user/signin';
+      const url = `${BASE_URL}${endpoint}`;
+
       const body = isRegister
         ? { ...form } // Envia tudo no cadastro
         : { username: form.username, password: form.password }; // Apenas credenciais no login
 
-      console.log('Enviando para API:', isRegister ? 'CADASTRO' : 'LOGIN', body);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
 
-      // Simula delay de rede
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `Erro ${response.status}: Falha na solicitação`);
+      }
 
       if (isRegister) {
         Alert.alert('Sucesso', 'Cadastro realizado com sucesso! Faça login para continuar.');
         setIsRegister(false);
         setForm(initialForm);
       } else {
-        // Login com sucesso
-        // Aqui você salvaria o token se tivesse a resposta da API
-        navigation.navigate('home', { userName: form.username });
+        if (data.token) {
+          await AsyncStorage.setItem('token', data.token);
+          navigation.navigate('Posts' as never);
+        } else {
+          throw new Error('Token de autenticação não recebido.');
+        }
       }
-
     } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
+      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+      Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);
     }
