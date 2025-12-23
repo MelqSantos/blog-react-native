@@ -27,6 +27,7 @@ interface Post {
   createdat: string;
   updatedat: string;
   author_id: number;
+  author: string;
 }
 
 // Ajuste de URL para Android Emulator vs iOS Simulator/Web
@@ -100,11 +101,6 @@ export default function PostsScreen() {
 
   const renderItem = ({ item }: { item: Post }) => (
     <View style={styles.postContainer}>
-      {/* Data */}
-      <Text style={styles.dateText}>
-        {new Date(item.createdat).toLocaleString()}
-      </Text>
-
       {/* Título e Tags */}
       <View style={styles.headerContent}>
         <View style={{ flex: 1 }}>
@@ -131,8 +127,13 @@ export default function PostsScreen() {
       </View>
 
       {/* Conteúdo (Resumo) */}
-      <Text style={styles.postContent} numberOfLines={3}>
+      <Text style={styles.postContent}>
         {item.content}
+      </Text>
+
+      {/* Data */}
+      <Text style={styles.dateText}>
+        {new Date(item.updatedat).toLocaleString()} • {item.author}
       </Text>
     </View>
   );
@@ -262,7 +263,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
     fontWeight: '500',
-    marginBottom: 4,
+    marginTop: 10,
+    fontStyle: 'italic'
   },
   headerContent: {
     flexDirection: 'row',

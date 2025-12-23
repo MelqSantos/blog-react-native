@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, Platform, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function Header() {
   const navigation = useNavigation();
   const route = useRoute();
+  const [menuVisible, setMenuVisible] = useState(false);
   
   // Verifica se a rota atual é 'Login' (case insensitive para segurança)
   const isLogin = route.name.toLowerCase() === 'login';
@@ -16,7 +17,7 @@ export default function Header() {
   };
 
 return(
-  <View style={styles.header}>
+  <View style={[styles.header, { zIndex: 10 }]}>
     <TouchableOpacity 
       style={styles.logoContainer}
       disabled={isLogin}
@@ -34,12 +35,31 @@ return(
 
       {/* Botão de Logout (Apenas se não estiver no Login) */}
       {!isLogin && (
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Sair</Text>
-          <Ionicons name="log-out-outline" size={24} color="#F9FAFB" />
+        <TouchableOpacity onPress={() => setMenuVisible(!menuVisible)} style={styles.iconButton}>
+          <Ionicons name={menuVisible ? "close" : "menu"} size={30} color="#F9FAFB" />
         </TouchableOpacity>
       )}
     </View>
+
+    {/* Menu Dropdown (Toggle) */}
+    {menuVisible && !isLogin && (
+      <View style={styles.menuOverlay}>
+        <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.navigate('Professores' as never); }} style={styles.menuItem}>
+          <Ionicons name="easel-outline" size={24} color="#F9FAFB" />
+          <Text style={styles.menuText}>Professores</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.navigate('Alunos' as never); }} style={styles.menuItem}>
+          <Ionicons name="people-outline" size={24} color="#F9FAFB" />
+          <Text style={styles.menuText}>Alunos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => { setMenuVisible(false); handleLogout(); }} style={styles.menuItem}>
+          <Ionicons name="log-out-outline" size={24} color="#F9FAFB" />
+          <Text style={styles.menuText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
+    )}
   </View>
 )
 }
@@ -48,9 +68,9 @@ const styles = StyleSheet.create({
   header:{
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    height: 80,
-    paddingTop: Platform.OS === 'android' ? 30 : 10,
+    justifyContent: 'space-between',
+    height: 90,
+    paddingTop: 30,
     backgroundColor: '#111827',
     paddingHorizontal: 16,  
     borderBottomWidth: 1,
@@ -89,5 +109,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#F9FAFB',
+  },
+  menuOverlay: {
+    position: 'absolute',
+    top: 80,
+    left: 0,
+    right: 0,
+    backgroundColor: '#1F2937',
+    padding: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    gap: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#374151',
+  },
+  menuText: {
+    fontSize: 18,
+    color: '#F9FAFB',
+    fontWeight: '500',
   }
 })
