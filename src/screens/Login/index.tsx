@@ -95,6 +95,9 @@ export default function Login() {
       } else {
         if (data.token) {
           await AsyncStorage.setItem('token', data.token);
+          if (data.id) {
+            await AsyncStorage.setItem('id', String(data.id));
+          }
           navigation.navigate('Posts' as never);
         } else {
           throw new Error('Token de autenticação não recebido.');
@@ -274,7 +277,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 25,
     width: '100%',
-    // Sombras estilo Tailwind shadow-lg
     shadowColor: "#000",
     shadowOffset: {
       width: 0,

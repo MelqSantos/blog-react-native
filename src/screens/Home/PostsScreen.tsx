@@ -11,6 +11,7 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  Modal,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -39,7 +40,14 @@ export default function PostsScreen() {
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   
-  // Simulação de role para manter a lógica visual do botão de adicionar (opcional)
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('');
+  const [content, setContent] = useState('');
+  const [author, setAuthor] = useState('');
+  
+  // Simulação de role para manter a lógica visual do botão de adicionar
   const isProfessor = true; 
 
   const navigation = useNavigation();
@@ -99,6 +107,98 @@ export default function PostsScreen() {
     }
   };
 
+  const openModal = (post?: Post) => {
+    if (post) {
+      setEditingId(post.id);
+      setTitle(post.title);
+      setSubject(post.subject);
+      setContent(post.content);
+    } else {
+      setEditingId(null);
+      setTitle('');
+      setSubject('');
+      setContent('');
+    }
+    setModalVisible(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !subject.trim() || !content.trim()) {
+      Alert.alert("Atenção", "Preencha todos os campos.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const storedId = await AsyncStorage.getItem('id');
+
+      if (!token || !storedId) throw new Error("Sessão inválida. Faça login novamente.");
+      const author_id = Number(storedId);
+
+      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId ? `${BASE_URL}/posts/${editingId}` : `${BASE_URL}/posts`;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ title, subject, content, author_id })
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar post");
+
+      setModalVisible(false);
+      fetchPosts(); // Atualiza a lista
+      Alert.alert("Sucesso", "Post salvo com sucesso!");
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar o post.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      "Excluir Post",
+      "Tem certeza que deseja excluir este post?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const token = await AsyncStorage.getItem('token');
+              if (!token) throw new Error("Sessão inválida");
+
+              const response = await fetch(`${BASE_URL}/posts/${id}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+
+              if (!response.ok) throw new Error("Erro ao excluir post");
+
+              fetchPosts();
+              Alert.alert("Sucesso", "Post excluído com sucesso!");
+            } catch (error) {
+              Alert.alert("Erro", "Não foi possível excluir o post.");
+              console.error(error);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderItem = ({ item }: { item: Post }) => (
     <View style={styles.postContainer}>
       {/* Título e Tags */}
@@ -116,10 +216,10 @@ export default function PostsScreen() {
         {/* Ações (Editar/Excluir) - Visível apenas se professor */}
         {isProfessor && (
           <View style={styles.actionsContainer}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => openModal(item)}>
               <Feather name="edit-2" size={20} color="#3b82f6" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item.id)}>
               <Feather name="trash-2" size={20} color="#ef4444" />
             </TouchableOpacity>
           </View>
@@ -167,7 +267,7 @@ export default function PostsScreen() {
           </View>
 
           {isProfessor && (
-            <TouchableOpacity style={styles.addButton} onPress={() => console.log("Adicionar")}>
+            <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
               <Feather name="plus" size={24} color="#3b82f6" />
             </TouchableOpacity>
           )}
@@ -190,6 +290,56 @@ export default function PostsScreen() {
         )}
       </View>
       </SafeAreaView>
+
+      {/* Modal de Adicionar/Editar */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{editingId ? "Editar Post" : "Novo Post"}</Text>
+            
+            <TextInput 
+              style={styles.input} 
+              placeholder="Título" 
+              placeholderTextColor="#9CA3AF"
+              value={title}
+              onChangeText={setTitle}
+            />
+            
+            <TextInput 
+              style={styles.input} 
+              placeholder="Assunto (Tag)" 
+              placeholderTextColor="#9CA3AF"
+              value={subject}
+              onChangeText={setSubject}
+            />
+            
+            <TextInput 
+              style={[styles.input, styles.textArea]} 
+              placeholder="Conteúdo" 
+              placeholderTextColor="#9CA3AF"
+              value={content}
+              onChangeText={setContent}
+              multiline
+              numberOfLines={4}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSave}>
+                <Text style={styles.buttonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -307,5 +457,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#9CA3AF',
     marginTop: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#1F2937',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#374151',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#F9FAFB',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: '#374151',
+    color: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#4B5563',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#EF4444',
+  },
+  saveButton: {
+    backgroundColor: '#3B82F6',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });
