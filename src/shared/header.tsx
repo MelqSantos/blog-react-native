@@ -21,18 +21,13 @@ return(
     <TouchableOpacity 
       style={styles.logoContainer}
       disabled={isLogin}
-      onPress={() => navigation.navigate('home' as never)}
+      onPress={() => navigation.navigate('Home' as never)}
     >
       <Ionicons name="school" size={28} color="#3B82F6" />
       <Text style={styles.headerText}>Blog academy</Text>
     </TouchableOpacity>
 
     <View style={styles.actions}>
-      {/* Botão de Tema (Visual) */}
-      {/* <TouchableOpacity style={styles.iconButton}>
-        <Ionicons name="sunny-outline" size={24} color="#F9FAFB" />
-      </TouchableOpacity> */}
-
       {/* Botão de Logout (Apenas se não estiver no Login) */}
       {!isLogin && (
         <TouchableOpacity onPress={() => setMenuVisible(!menuVisible)} style={styles.iconButton}>
