@@ -12,6 +12,8 @@ import {
   SafeAreaView,
   Alert,
   Modal,
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -302,41 +304,45 @@ export default function PostsScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{editingId ? "Editar Post" : "Novo Post"}</Text>
             
-            <TextInput 
-              style={styles.input} 
-              placeholder="Título" 
-              placeholderTextColor="#9CA3AF"
-              value={title}
-              onChangeText={setTitle}
-            />
-            
-            <TextInput 
-              style={styles.input} 
-              placeholder="Assunto (Tag)" 
-              placeholderTextColor="#9CA3AF"
-              value={subject}
-              onChangeText={setSubject}
-            />
-            
-            <TextInput 
-              style={[styles.input, styles.textArea]} 
-              placeholder="Conteúdo" 
-              placeholderTextColor="#9CA3AF"
-              value={content}
-              onChangeText={setContent}
-              multiline
-              numberOfLines={4}
-            />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.label}>Título</Text>
+                <TextInput 
+                  style={styles.input} 
+                  placeholderTextColor="#9CA3AF"
+                  value={title}
+                  onChangeText={setTitle}
+                />
+                
+                <Text style={styles.label}>Assunto (Tag)</Text>
+                <TextInput 
+                  style={styles.input} 
+                  placeholderTextColor="#9CA3AF"
+                  value={subject}
+                  onChangeText={setSubject}
+                />
+                
+                <Text style={styles.label}>Conteúdo</Text>
+                <TextInput 
+                  style={[styles.input, styles.textArea]} 
+                  placeholderTextColor="#9CA3AF"
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                  numberOfLines={4}
+                />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.buttonText}>Cancelar</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSave}>
-                <Text style={styles.buttonText}>Salvar</Text>
-              </TouchableOpacity>
-            </View>
+                  <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSave}>
+                    <Text style={styles.buttonText}>Salvar</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </View>
         </View>
       </Modal>
@@ -470,6 +476,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#374151',
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
@@ -477,6 +484,12 @@ const styles = StyleSheet.create({
     color: '#F9FAFB',
     marginBottom: 16,
     textAlign: 'center',
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#D1D5DB',
+    marginBottom: 6,
   },
   input: {
     backgroundColor: '#374151',

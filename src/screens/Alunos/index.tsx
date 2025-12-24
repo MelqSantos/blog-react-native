@@ -21,8 +21,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../../shared/header';
 
-// Definição da Interface do Professor
-interface Professor {
+// Definição da Interface do Aluno
+interface Aluno {
   id: number;
   user_id: number;
   name: string;
@@ -56,10 +56,10 @@ const formatDateBackend = (dateString: string) => {
   return dateString;
 };
 
-export default function ProfessoresScreen() {
+export default function AlunosScreen() {
   const [searchValue, setSearchValue] = useState('');
-  const [allProfessors, setAllProfessors] = useState<Professor[]>([]);
-  const [filteredProfessors, setFilteredProfessors] = useState<Professor[]>([]);
+  const [allStudents, setAllStudents] = useState<Aluno[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<Aluno[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -77,25 +77,25 @@ export default function ProfessoresScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    fetchProfessors(0, true);
+    fetchStudents(0, true);
   }, []);
 
   // Filtro local (search)
   useEffect(() => {
     if (searchValue.trim() === '') {
-      setFilteredProfessors(allProfessors);
+      setFilteredStudents(allStudents);
     } else {
       const lowerSearch = searchValue.toLowerCase();
-      const filtered = allProfessors.filter(prof => 
-        prof.name.toLowerCase().includes(lowerSearch) ||
-        prof.email.toLowerCase().includes(lowerSearch) ||
-        prof.username.toLowerCase().includes(lowerSearch)
+      const filtered = allStudents.filter(student => 
+        student.name.toLowerCase().includes(lowerSearch) ||
+        student.email.toLowerCase().includes(lowerSearch) ||
+        student.username.toLowerCase().includes(lowerSearch)
       );
-      setFilteredProfessors(filtered);
+      setFilteredStudents(filtered);
     }
-  }, [searchValue, allProfessors]);
+  }, [searchValue, allStudents]);
 
-  const fetchProfessors = async (pageNumber = 0, shouldRefresh = false) => {
+  const fetchStudents = async (pageNumber = 0, shouldRefresh = false) => {
     if (loading) return;
     setLoading(true); 
     try {
@@ -105,8 +105,8 @@ export default function ProfessoresScreen() {
         throw new Error('Usuário não autenticado. Faça login novamente.');
       }
 
-      // Adicionada paginação na URL
-      const response = await fetch(`${BASE_URL}/person/role/PROFESSOR?page=${pageNumber}&size=10`, {
+      // Adicionada paginação na URL e filtro por ALUNO
+      const response = await fetch(`${BASE_URL}/person/role/ALUNO?page=${pageNumber}&size=10`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -124,31 +124,30 @@ export default function ProfessoresScreen() {
       const isLast = data.last !== undefined ? data.last : list.length < 10;
       
       if (shouldRefresh) {
-        setAllProfessors(list);
+        setAllStudents(list);
         setPage(0);
       } else {
-        setAllProfessors(prev => [...prev, ...list]);
+        setAllStudents(prev => [...prev, ...list]);
         setPage(pageNumber);
       }
 
       setHasMore(!isLast);
-      // O useEffect de search atualizará o filteredProfessors automaticamente
 
     } catch (error) {
-      console.error("Erro ao buscar professores:", error);
+      console.error("Erro ao buscar alunos:", error);
       Alert.alert("Erro", `Falha na conexão: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const openModal = (prof?: Professor) => {
-    if (prof) {
-      setEditingId(prof.user_id);
-      setName(prof.name);
-      setEmail(prof.email);
-      setBirth(formatDateDisplay(prof.birth));
-      setUsername(prof.username);
+  const openModal = (student?: Aluno) => {
+    if (student) {
+      setEditingId(student.user_id);
+      setName(student.name);
+      setEmail(student.email);
+      setBirth(formatDateDisplay(student.birth));
+      setUsername(student.username);
       setPassword(''); // Senha não é preenchida na edição por segurança
     } else {
       setEditingId(null);
@@ -178,20 +177,18 @@ export default function ProfessoresScreen() {
 
       if (editingId !== null) {
         // Edição: PUT /user/{id} com payload específico
-        console.log(editingId)
         url = `${BASE_URL}/user/${editingId}`;
         method = 'PUT';
         body = {
           username,
-          role: 'PROFESSOR',
+          role: 'ALUNO',
           name,
           birth: formatDateBackend(birth),
           email
         };
-        console.log(body)
       } else {
         // Inclusão: POST /user com senha
-        body = { name, email, birth: formatDateBackend(birth), username, role: 'PROFESSOR' };
+        body = { name, email, birth: formatDateBackend(birth), username, role: 'ALUNO' };
         if (password) {
           body.password = password;
         }
@@ -208,14 +205,14 @@ export default function ProfessoresScreen() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Erro ao salvar professor");
+        throw new Error(errorData.message || "Erro ao salvar aluno");
       }
 
       setModalVisible(false);
-      fetchProfessors(0, true); // Recarrega a lista do zero
-      Alert.alert("Sucesso", "Professor salvo com sucesso!");
+      fetchStudents(0, true); // Recarrega a lista do zero
+      Alert.alert("Sucesso", "Aluno salvo com sucesso!");
     } catch (error) {
-      Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível salvar o professor.");
+      Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível salvar o aluno.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -224,8 +221,8 @@ export default function ProfessoresScreen() {
 
   const handleDelete = (id: number) => {
     Alert.alert(
-      "Excluir Professor",
-      "Tem certeza que deseja excluir este professor?",
+      "Excluir Aluno",
+      "Tem certeza que deseja excluir este aluno?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -244,12 +241,12 @@ export default function ProfessoresScreen() {
                 }
               });
 
-              if (!response.ok) throw new Error("Erro ao excluir professor");
+              if (!response.ok) throw new Error("Erro ao excluir aluno");
 
-              fetchProfessors(0, true);
-              Alert.alert("Sucesso", "Professor excluído com sucesso!");
+              fetchStudents(0, true);
+              Alert.alert("Sucesso", "Aluno excluído com sucesso!");
             } catch (error) {
-              Alert.alert("Erro", "Não foi possível excluir o professor.");
+              Alert.alert("Erro", "Não foi possível excluir o aluno.");
               console.error(error);
             } finally {
               setLoading(false);
@@ -260,7 +257,7 @@ export default function ProfessoresScreen() {
     );
   };
 
-  const renderItem = ({ item }: { item: Professor }) => (
+  const renderItem = ({ item }: { item: Aluno }) => (
     <View style={styles.cardContainer}>
       <View style={styles.headerContent}>
         <View style={{ flex: 1 }}>
@@ -296,14 +293,14 @@ export default function ProfessoresScreen() {
       <Header />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <Text style={styles.screenTitle}>Professores</Text>
-          <Text style={styles.screenSubtitle}>Gerenciamento de docentes</Text>
+          <Text style={styles.screenTitle}>Alunos</Text>
+          <Text style={styles.screenSubtitle}>Gerenciamento de discentes</Text>
 
           <View style={styles.searchRow}>
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
-                placeholder="Buscar professor"
+                placeholder="Buscar aluno"
                 placeholderTextColor="#9ca3af"
                 value={searchValue}
                 onChangeText={setSearchValue}
@@ -320,17 +317,17 @@ export default function ProfessoresScreen() {
             <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
           ) : (
             <FlatList
-              data={filteredProfessors}
+              data={filteredStudents}
               keyExtractor={(item) => item.id.toString()}
               renderItem={renderItem}
               contentContainerStyle={styles.listContent}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>Nenhum professor encontrado.</Text>
+                <Text style={styles.emptyText}>Nenhum aluno encontrado.</Text>
               }
               onEndReached={() => {
                 if (hasMore && !loading) {
-                  fetchProfessors(page + 1, false);
+                  fetchStudents(page + 1, false);
                 }
               }}
               onEndReachedThreshold={0.1}
@@ -348,7 +345,7 @@ export default function ProfessoresScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{editingId ? "Editar Professor" : "Novo Professor"}</Text>
+            <Text style={styles.modalTitle}>{editingId ? "Editar Aluno" : "Novo Aluno"}</Text>
             
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <ScrollView showsVerticalScrollIndicator={false}>

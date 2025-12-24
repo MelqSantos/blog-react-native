@@ -39,6 +39,11 @@ return(
     {/* Menu Dropdown (Toggle) */}
     {menuVisible && !isLogin && (
       <View style={styles.menuOverlay}>
+        <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.navigate('Home' as never); }} style={styles.menuItem}>
+          <Ionicons name="home" size={24} color="#F9FAFB" />
+          <Text style={styles.menuText}>Home</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.navigate('Professores' as never); }} style={styles.menuItem}>
           <Ionicons name="easel-outline" size={24} color="#F9FAFB" />
           <Text style={styles.menuText}>Professores</Text>
