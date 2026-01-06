@@ -61,8 +61,6 @@ export default function ProfessoresScreen() {
   const [allProfessors, setAllProfessors] = useState<Professor[]>([]);
   const [filteredProfessors, setFilteredProfessors] = useState<Professor[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -85,7 +83,7 @@ export default function ProfessoresScreen() {
       setUserProfile(profile || '');
     };
     loadProfile();
-    fetchProfessors(0, true);
+    fetchProfessors();
   }, []);
 
   // Filtro local (search)
@@ -103,7 +101,7 @@ export default function ProfessoresScreen() {
     }
   }, [searchValue, allProfessors]);
 
-  const fetchProfessors = async (pageNumber = 0, shouldRefresh = false) => {
+  const fetchProfessors = async () => {
     if (loading) return;
     setLoading(true); 
     try {
@@ -113,8 +111,7 @@ export default function ProfessoresScreen() {
         throw new Error('Usuário não autenticado. Faça login novamente.');
       }
 
-      // Adicionada paginação na URL
-      const response = await fetch(`${BASE_URL}/person/role/PROFESSOR?page=${pageNumber}&size=10`, {
+      const response = await fetch(`${BASE_URL}/person/role/PROFESSOR`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -129,17 +126,8 @@ export default function ProfessoresScreen() {
       const data = await response.json();
       // Tratativa para garantir que seja um array
       const list = data.content || (Array.isArray(data) ? data : []);
-      const isLast = data.last !== undefined ? data.last : list.length < 10;
       
-      if (shouldRefresh) {
-        setAllProfessors(list);
-        setPage(0);
-      } else {
-        setAllProfessors(prev => [...prev, ...list]);
-        setPage(pageNumber);
-      }
-
-      setHasMore(!isLast);
+      setAllProfessors(list);
       // O useEffect de search atualizará o filteredProfessors automaticamente
 
     } catch (error) {
@@ -220,7 +208,7 @@ export default function ProfessoresScreen() {
       }
 
       setModalVisible(false);
-      fetchProfessors(0, true); // Recarrega a lista do zero
+      fetchProfessors(); // Recarrega a lista
       Alert.alert("Sucesso", "Professor salvo com sucesso!");
     } catch (error) {
       Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível salvar o professor.");
@@ -254,7 +242,7 @@ export default function ProfessoresScreen() {
 
               if (!response.ok) throw new Error("Erro ao excluir professor");
 
-              fetchProfessors(0, true);
+              fetchProfessors();
               Alert.alert("Sucesso", "Professor excluído com sucesso!");
             } catch (error) {
               Alert.alert("Erro", "Não foi possível excluir o professor.");
@@ -328,7 +316,7 @@ export default function ProfessoresScreen() {
             )}
           </View>
 
-          {loading && page === 0 && !modalVisible ? (
+          {loading && allProfessors.length === 0 && !modalVisible ? (
             <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
           ) : (
             <FlatList
@@ -340,13 +328,6 @@ export default function ProfessoresScreen() {
               ListEmptyComponent={
                 <Text style={styles.emptyText}>Nenhum professor encontrado.</Text>
               }
-              onEndReached={() => {
-                if (hasMore && !loading) {
-                  fetchProfessors(page + 1, false);
-                }
-              }}
-              onEndReachedThreshold={0.1}
-              ListFooterComponent={loading && page > 0 ? <ActivityIndicator color="#3b82f6" /> : null}
             />
           )}
         </View>
