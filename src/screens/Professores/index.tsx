@@ -73,10 +73,18 @@ export default function ProfessoresScreen() {
   const [birth, setBirth] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [userProfile, setUserProfile] = useState('');
 
   const navigation = useNavigation();
 
   useEffect(() => {
+    const loadProfile = async () => {
+      const profile = await AsyncStorage.getItem('profile');
+      const keys = await AsyncStorage.getAllKeys();
+      console.log(keys)
+      setUserProfile(profile || '');
+    };
+    loadProfile();
     fetchProfessors(0, true);
   }, []);
 
@@ -268,14 +276,16 @@ export default function ProfessoresScreen() {
           <Text style={styles.cardSubtitle}>{item.email}</Text>
         </View>
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => openModal(item)}>
-            <Feather name="edit-2" size={20} color="#3b82f6" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item.user_id)}>
-            <Feather name="trash-2" size={20} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
+        {userProfile === 'PROFESSOR' && (
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => openModal(item)}>
+              <Feather name="edit-2" size={20} color="#3b82f6" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item.user_id)}>
+              <Feather name="trash-2" size={20} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <View style={styles.infoContainer}>
@@ -311,9 +321,11 @@ export default function ProfessoresScreen() {
               <Feather name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
             </View>
 
-            <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
-              <Feather name="plus" size={24} color="#3b82f6" />
-            </TouchableOpacity>
+            {userProfile === 'aluno' && (
+              <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
+                <Feather name="plus" size={24} color="#3b82f6" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {loading && page === 0 && !modalVisible ? (

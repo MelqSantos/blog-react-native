@@ -61,8 +61,6 @@ export default function AlunosScreen() {
   const [allStudents, setAllStudents] = useState<Aluno[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Aluno[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -73,11 +71,17 @@ export default function AlunosScreen() {
   const [birth, setBirth] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [userProfile, setUserProfile] = useState('');
 
   const navigation = useNavigation();
 
   useEffect(() => {
-    fetchStudents(0, true);
+    const loadProfile = async () => {
+      const profile = await AsyncStorage.getItem('profile');
+      setUserProfile(profile || '');
+    };
+    loadProfile();
+    fetchStudents();
   }, []);
 
   // Filtro local (search)
@@ -95,7 +99,7 @@ export default function AlunosScreen() {
     }
   }, [searchValue, allStudents]);
 
-  const fetchStudents = async (pageNumber = 0, shouldRefresh = false) => {
+  const fetchStudents = async () => {
     if (loading) return;
     setLoading(true); 
     try {
@@ -105,8 +109,7 @@ export default function AlunosScreen() {
         throw new Error('Usuário não autenticado. Faça login novamente.');
       }
 
-      // Adicionada paginação na URL e filtro por ALUNO
-      const response = await fetch(`${BASE_URL}/person/role/ALUNO?page=${pageNumber}&size=10`, {
+      const response = await fetch(`${BASE_URL}/person/role/ALUNO`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -121,17 +124,8 @@ export default function AlunosScreen() {
       const data = await response.json();
       // Tratativa para garantir que seja um array
       const list = data.content || (Array.isArray(data) ? data : []);
-      const isLast = data.last !== undefined ? data.last : list.length < 10;
       
-      if (shouldRefresh) {
-        setAllStudents(list);
-        setPage(0);
-      } else {
-        setAllStudents(prev => [...prev, ...list]);
-        setPage(pageNumber);
-      }
-
-      setHasMore(!isLast);
+      setAllStudents(list);
 
     } catch (error) {
       console.error("Erro ao buscar alunos:", error);
@@ -209,7 +203,7 @@ export default function AlunosScreen() {
       }
 
       setModalVisible(false);
-      fetchStudents(0, true); // Recarrega a lista do zero
+      fetchStudents(); // Recarrega a lista
       Alert.alert("Sucesso", "Aluno salvo com sucesso!");
     } catch (error) {
       Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível salvar o aluno.");
@@ -243,7 +237,7 @@ export default function AlunosScreen() {
 
               if (!response.ok) throw new Error("Erro ao excluir aluno");
 
-              fetchStudents(0, true);
+              fetchStudents();
               Alert.alert("Sucesso", "Aluno excluído com sucesso!");
             } catch (error) {
               Alert.alert("Erro", "Não foi possível excluir o aluno.");
@@ -265,14 +259,17 @@ export default function AlunosScreen() {
           <Text style={styles.cardSubtitle}>{item.email}</Text>
         </View>
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => openModal(item)}>
-            <Feather name="edit-2" size={20} color="#3b82f6" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item.user_id)}>
-            <Feather name="trash-2" size={20} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
+        {/* Ações (Editar/Excluir) - Visível apenas se professor */}  
+        {userProfile === 'PROFESSOR' && (
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => openModal(item)}>
+              <Feather name="edit-2" size={20} color="#3b82f6" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item.user_id)}>
+              <Feather name="trash-2" size={20} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <View style={styles.infoContainer}>
@@ -308,12 +305,14 @@ export default function AlunosScreen() {
               <Feather name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
             </View>
 
-            <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
-              <Feather name="plus" size={24} color="#3b82f6" />
-            </TouchableOpacity>
+            {userProfile === 'aluno' && (
+              <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
+                <Feather name="plus" size={24} color="#3b82f6" />
+              </TouchableOpacity>
+            )}
           </View>
 
-          {loading && page === 0 && !modalVisible ? (
+          {loading && allStudents.length === 0 && !modalVisible ? (
             <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
           ) : (
             <FlatList
@@ -325,13 +324,6 @@ export default function AlunosScreen() {
               ListEmptyComponent={
                 <Text style={styles.emptyText}>Nenhum aluno encontrado.</Text>
               }
-              onEndReached={() => {
-                if (hasMore && !loading) {
-                  fetchStudents(page + 1, false);
-                }
-              }}
-              onEndReachedThreshold={0.1}
-              ListFooterComponent={loading && page > 0 ? <ActivityIndicator color="#3b82f6" /> : null}
             />
           )}
         </View>

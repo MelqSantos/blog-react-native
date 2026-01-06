@@ -48,13 +48,16 @@ export default function PostsScreen() {
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
-  
-  // Simulação de role para manter a lógica visual do botão de adicionar
-  const isProfessor = true; 
+  const [userProfile, setUserProfile] = useState('');
 
   const navigation = useNavigation();
 
   useEffect(() => {
+    const loadProfile = async () => {
+      const profile = await AsyncStorage.getItem('profile');
+      setUserProfile(profile || '');
+    };
+    loadProfile();
     fetchPosts();
   }, []);
 
@@ -216,7 +219,7 @@ export default function PostsScreen() {
         </View>
 
         {/* Ações (Editar/Excluir) - Visível apenas se professor */}
-        {isProfessor && (
+        {userProfile === 'PROFESSOR' && (
           <View style={styles.actionsContainer}>
             <TouchableOpacity style={styles.actionButton} onPress={() => openModal(item)}>
               <Feather name="edit-2" size={20} color="#3b82f6" />
@@ -268,7 +271,7 @@ export default function PostsScreen() {
             <Feather name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
           </View>
 
-          {isProfessor && (
+          {userProfile === 'aluno' && (
             <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
               <Feather name="plus" size={24} color="#3b82f6" />
             </TouchableOpacity>

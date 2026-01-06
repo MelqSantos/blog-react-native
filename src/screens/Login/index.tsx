@@ -95,9 +95,8 @@ export default function Login() {
       } else {
         if (data.token) {
           await AsyncStorage.setItem('token', data.token);
-          if (data.id) {
-            await AsyncStorage.setItem('id', String(data.id));
-          }
+          await AsyncStorage.setItem('profile', data.role);
+          await AsyncStorage.setItem('id', String(data.id));
           navigation.navigate('Posts' as never);
         } else {
           throw new Error('Token de autenticação não recebido.');
