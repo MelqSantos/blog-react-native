@@ -48,7 +48,8 @@ Este é o aplicativo mobile desenvolvido para o Tech Challenge, focado no gerenc
 ---
 
 ### Instruções Back-End
-    Seguir documentação disponível no repositório: [Back-end Blog Academy](https://github.com/MelqSantos/blogAcademy)
+
+Seguir documentação disponível no repositório: [Back-end Blog Academy](https://github.com/MelqSantos/blogAcademy)
 
 ---
 
