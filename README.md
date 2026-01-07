@@ -1,6 +1,6 @@
 # Blog Mobile - FIAP Tech Challenge
 
-Este é o aplicativo móvel desenvolvido para o Tech Challenge, focado no gerenciamento de postagens de blog, alunos e professores. O projeto foi construído utilizando React Native com Expo.
+Este é o aplicativo mobile desenvolvido para o Tech Challenge, focado no gerenciamento de postagens de blog, alunos e professores. O projeto foi construído utilizando React Native com Expo.
 
 ## 🚀 Como Rodar o Projeto
 
@@ -11,7 +11,7 @@ Este é o aplicativo móvel desenvolvido para o Tech Challenge, focado no gerenc
 *   Aplicativo **Expo Go** no seu celular ou um emulador (Android Studio/Xcode).
 *   Backend da aplicação rodando (certifique-se de que o `BASE_URL` nos arquivos de serviço aponta para o IP correto da sua máquina/servidor).
 
-### Passo a Passo
+### Passo a Passo Front-End
 
 1.  **Instale as dependências:**
 
@@ -44,6 +44,11 @@ Este é o aplicativo móvel desenvolvido para o Tech Challenge, focado no gerenc
     *   `expo-linear-gradient` para fundos com gradiente.
     *   `@expo/vector-icons` (Feather) para ícones.
 *   **Integração API:** `fetch` nativo para comunicação REST com o backend.
+
+---
+
+### Instruções Back-End
+    Seguir documentação disponível no repositório: [Back-end Blog Academy](https://github.com/MelqSantos/blogAcademy)
 
 ---
 
