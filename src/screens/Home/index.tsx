@@ -271,7 +271,7 @@ export default function PostsScreen() {
             <Feather name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
           </View>
 
-          {userProfile === 'aluno' && (
+          {userProfile === 'PROFESSOR' && (
             <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
               <Feather name="plus" size={24} color="#3b82f6" />
             </TouchableOpacity>
